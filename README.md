@@ -1,2 +1,3 @@
-# Sigma-Cartographer
-Map exporting tool for KSP
+# Sigma Cartographer
+
+**Map exporting tool for KSP**
