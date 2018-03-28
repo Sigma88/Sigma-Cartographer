@@ -34,10 +34,13 @@ namespace SigmaRandomPlugin
         static bool oceanFloor = true;
         static double LAToffset = 0;
         static double LONoffset = 0;
+        static Texture2D altitudeColor = null;
         static float normalStrength = 1;
         Color slopeMin = new Color(0.2f, 0.3f, 0.4f);
         Color slopeMax = new Color(0.9f, 0.6f, 0.5f);
         static List<int> printTile = new List<int>();
+        static int? printFrom = null;
+        static int? printTo = null;
 
         static int current = 0;
 
@@ -85,8 +88,6 @@ namespace SigmaRandomPlugin
 
                     bool.TryParse(planetInfo.GetValue("leaflet"), out leaflet);
 
-
-
                     if (!bool.TryParse(planetInfo.GetValue("oceanFloor"), out oceanFloor))
                     {
                         oceanFloor = true;
@@ -100,6 +101,11 @@ namespace SigmaRandomPlugin
                     if (!double.TryParse(planetInfo.GetValue("LONoffset"), out LONoffset))
                     {
                         LONoffset = 0;
+                    }
+
+                    if (planetInfo.HasValue("altitudeColor"))
+                    {
+                        altitudeColor = Resources.FindObjectsOfTypeAll<Texture2D>().Where(t => t.name == planetInfo.GetValue("altitudeColor")).FirstOrDefault();
                     }
 
                     if (!float.TryParse(planetInfo.GetValue("normalStrength"), out normalStrength))
@@ -128,6 +134,26 @@ namespace SigmaRandomPlugin
                         }
                     }
 
+                    int temp = 0;
+
+                    if (int.TryParse(planetInfo.GetValue("printFrom"), out temp))
+                    {
+                        printFrom = temp;
+                    }
+                    else
+                    {
+                        printFrom = null;
+                    }
+
+                    if (int.TryParse(planetInfo.GetValue("printTo"), out temp))
+                    {
+                        printTo = temp;
+                    }
+                    else
+                    {
+                        printTo = null;
+                    }
+
                     if (!body.ocean)
                     {
                         oceanFloor = true;
@@ -154,7 +180,7 @@ namespace SigmaRandomPlugin
         void GeneratePQSMaps()
         {
             // Textures
-            Texture2D heightMap = new Texture2D(tile, tile, TextureFormat.RGB24, true);
+            Texture2D heightMap = new Texture2D(tile, tile, TextureFormat.ARGB32, true);
             Texture2D normalMap = new Texture2D(tile, tile, TextureFormat.ARGB32, true);
             Texture2D slopeMap = new Texture2D(tile, tile, TextureFormat.RGB24, true);
             Texture2D colorMap = new Texture2D(tile, tile, TextureFormat.ARGB32, true);
@@ -163,15 +189,15 @@ namespace SigmaRandomPlugin
             Texture2D biomeMap = new Texture2D(tile, tile, TextureFormat.RGB24, true);
 
             // Arrays
-            Color[] heightMapValues = new Color[tile * tile];
             double[] terrainHeightValues = new double[(tile + 2) * (tile + 2)];
+            Color[] heightMapValues = new Color[tile * tile];
             Color[] colorMapValues = new Color[tile * tile];
             Color[] oceanMapValues = new Color[tile * tile];
             Color[] biomeMapValues = new Color[tile * tile];
 
             // Edges
-            int firstY = width;
-            int lastY = width;
+            int? firstY = null;
+            int? lastY = null;
 
 
             // reset current
@@ -201,7 +227,7 @@ namespace SigmaRandomPlugin
             {
                 for (int i = 0; i < width; i += tile)
                 {
-                    if (printTile.Count == 0 || printTile.Contains(current))
+                    if (Print(current))
                     {
                         // Loop through the pixels
                         for (int y = -1; y < tile + 1; y++)
@@ -244,7 +270,26 @@ namespace SigmaRandomPlugin
                                         // Set the Pixels
                                         if (exportHeightMap && x > -1 && y > -1 && x < tile && y < tile)
                                         {
-                                            heightMapValues[(y * tile) + x] = new Color((float)height, (float)height, (float)height);
+                                            Color color = Color.white * (float)height;
+                                            color.a = 1;
+
+                                            if (altitudeColor != null)
+                                            {
+                                                if (height <= 0)
+                                                {
+                                                    color = altitudeColor.GetPixel(0, 0);
+                                                }
+                                                else if (height >= 1)
+                                                {
+                                                    color = altitudeColor.GetPixel(altitudeColor.width - 1, altitudeColor.height - 1);
+                                                }
+                                                else
+                                                {
+                                                    color = altitudeColor.GetPixel((int)(altitudeColor.width * height), (int)(altitudeColor.height * height));
+                                                }
+                                            }
+
+                                            heightMapValues[(y * tile) + x] = color;
                                         }
 
                                         if (exportNormalMap || exportSlopeMap || exportSatelliteMap)
@@ -396,7 +441,16 @@ namespace SigmaRandomPlugin
             DestroyImmediate(biomeMap);
         }
 
-        void CalculateSlope(double[] normalMapValues, PQS pqs, int firstY, int lastY, ref Texture2D normalMap, ref Texture2D slopeMap)
+        bool Print(int current)
+        {
+            bool from = (current >= printFrom) && !(current > printTo);
+            bool to = (current <= printTo) && !(current < printFrom);
+            bool tile = printTile.Contains(current);
+
+            return from || to || tile || (printTile.Count == 0 && printFrom == null && printTo == null);
+        }
+
+        void CalculateSlope(double[] normalMapValues, PQS pqs, int? firstY, int? lastY, ref Texture2D normalMap, ref Texture2D slopeMap)
         {
             double dS = pqs.radius * 2 * Math.PI / width;
 
@@ -408,7 +462,13 @@ namespace SigmaRandomPlugin
                     if (y == firstY || y == lastY)
                     {
                         if (exportNormalMap || exportSatelliteMap)
-                            normalMap.SetPixel(x, y, new Color(0.5f, 0.5f, 0.5f, 0.5f));
+                        {
+                            if (y == firstY)
+                                normalMap.SetPixel(x, y, new Color(1, 0, 0, 1));
+
+                            if (y == lastY)
+                                normalMap.SetPixel(x, y, new Color(0, 1, 0, 1));
+                        }
 
                         if (exportSlopeMap)
                             slopeMap.SetPixel(x, y, slopeMin);
