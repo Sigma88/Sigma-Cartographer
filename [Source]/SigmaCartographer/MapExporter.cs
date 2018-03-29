@@ -34,7 +34,7 @@ namespace SigmaRandomPlugin
         static bool oceanFloor = true;
         static double LAToffset = 0;
         static double LONoffset = 0;
-        static Texture2D altitudeColor = null;
+        static Dictionary<double, Color> altitudeColor = null;
         static float normalStrength = 1;
         Color slopeMin = new Color(0.2f, 0.3f, 0.4f);
         Color slopeMax = new Color(0.9f, 0.6f, 0.5f);
@@ -103,9 +103,18 @@ namespace SigmaRandomPlugin
                         LONoffset = 0;
                     }
 
-                    if (planetInfo.HasValue("altitudeColor"))
+                    if (planetInfo.HasNode("AltitudeColor"))
                     {
-                        altitudeColor = Resources.FindObjectsOfTypeAll<Texture2D>().Where(t => t.name == planetInfo.GetValue("altitudeColor")).FirstOrDefault();
+                        altitudeColor = Parse(planetInfo.GetNode("AltitudeColor"), altitudeColor);
+                    }
+
+                    if (altitudeColor == null)
+                    {
+                        altitudeColor = new Dictionary<double, Color>
+                        {
+                            { 0, Color.black },
+                            { 1, Color.white }
+                        };
                     }
 
                     if (!float.TryParse(planetInfo.GetValue("normalStrength"), out normalStrength))
@@ -270,22 +279,25 @@ namespace SigmaRandomPlugin
                                         // Set the Pixels
                                         if (exportHeightMap && x > -1 && y > -1 && x < tile && y < tile)
                                         {
-                                            Color color = Color.white * (float)height;
-                                            color.a = 1;
+                                            Color color = Color.black;
 
-                                            if (altitudeColor != null)
+                                            for (int k = 0; k < altitudeColor?.Count; k++)
                                             {
-                                                if (height <= 0)
+                                                KeyValuePair<double, Color> element1 = altitudeColor.ElementAt(k);
+
+                                                if (k == altitudeColor?.Count - 1)
                                                 {
-                                                    color = altitudeColor.GetPixel(0, 0);
-                                                }
-                                                else if (height >= 1)
-                                                {
-                                                    color = altitudeColor.GetPixel(altitudeColor.width - 1, altitudeColor.height - 1);
+                                                    color = element1.Value;
                                                 }
                                                 else
                                                 {
-                                                    color = altitudeColor.GetPixel((int)(altitudeColor.width * height), (int)(altitudeColor.height * height));
+                                                    KeyValuePair<double, Color> element2 = altitudeColor.ElementAt(k + 1);
+
+                                                    if (element2.Key > height)
+                                                    {
+                                                        color = Color.Lerp(element1.Value, element2.Value, (float)((height - element1.Key) / (element2.Key - element1.Key)));
+                                                        break;
+                                                    }
                                                 }
                                             }
 
@@ -525,6 +537,30 @@ namespace SigmaRandomPlugin
                         satelliteMap.SetPixel(x, y, oceanMap[(y * tile) + x]);
                 }
             }
+        }
+
+        Dictionary<double, Color> Parse(ConfigNode node, Dictionary<double, Color> defaultValue)
+        {
+            for (int i = 0; i < node?.values?.Count; i++)
+            {
+                ConfigNode.Value val = node.values[i];
+
+                defaultValue = defaultValue ?? new Dictionary<double, Color>();
+
+                if (double.TryParse(val.name, out double alt) && TryParse.Color(val.value, out Color color))
+                {
+                    defaultValue.Add(alt, color);
+                }
+                else
+                {
+                    defaultValue = null;
+                    break;
+                }
+
+                defaultValue.OrderBy(v => v.Key);
+            }
+
+            return defaultValue;
         }
     }
 
