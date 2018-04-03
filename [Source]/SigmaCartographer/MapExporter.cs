@@ -32,12 +32,16 @@ namespace SigmaRandomPlugin
         static bool leaflet = false;
 
         static bool oceanFloor = true;
+        static Color oceanColor = new Color(0.1f, 0.1f, 0.2f, 1f);
         static double LAToffset = 0;
         static double LONoffset = 0;
+        static List<KeyValuePair<double, Color>> altitudeColor = null;
         static float normalStrength = 1;
-        Color slopeMin = new Color(0.2f, 0.3f, 0.4f);
-        Color slopeMax = new Color(0.9f, 0.6f, 0.5f);
+        static Color slopeMin = new Color(0.2f, 0.3f, 0.4f);
+        static Color slopeMax = new Color(0.9f, 0.6f, 0.5f);
         static List<int> printTile = new List<int>();
+        static int? printFrom = null;
+        static int? printTo = null;
 
         static int current = 0;
 
@@ -85,11 +89,14 @@ namespace SigmaRandomPlugin
 
                     bool.TryParse(planetInfo.GetValue("leaflet"), out leaflet);
 
-
-
                     if (!bool.TryParse(planetInfo.GetValue("oceanFloor"), out oceanFloor))
                     {
                         oceanFloor = true;
+                    }
+
+                    if (!TryParse.Color(planetInfo.GetValue("oceanColor"), out oceanColor))
+                    {
+                        oceanColor = body?.pqsController?.mapOceanColor ?? new Color(0.1f, 0.1f, 0.2f, 1f);
                     }
 
                     if (!double.TryParse(planetInfo.GetValue("LAToffset"), out LAToffset))
@@ -100,6 +107,20 @@ namespace SigmaRandomPlugin
                     if (!double.TryParse(planetInfo.GetValue("LONoffset"), out LONoffset))
                     {
                         LONoffset = 0;
+                    }
+
+                    if (planetInfo.HasNode("AltitudeColor"))
+                    {
+                        altitudeColor = Parse(planetInfo.GetNode("AltitudeColor"), altitudeColor);
+                    }
+
+                    if (altitudeColor == null)
+                    {
+                        altitudeColor = new List<KeyValuePair<double, Color>>
+                        {
+                            new KeyValuePair<double, Color>(0, Color.black),
+                            new KeyValuePair<double, Color>(1, Color.white)
+                        };
                     }
 
                     if (!float.TryParse(planetInfo.GetValue("normalStrength"), out normalStrength))
@@ -128,6 +149,26 @@ namespace SigmaRandomPlugin
                         }
                     }
 
+                    int temp = 0;
+
+                    if (int.TryParse(planetInfo.GetValue("printFrom"), out temp))
+                    {
+                        printFrom = temp;
+                    }
+                    else
+                    {
+                        printFrom = null;
+                    }
+
+                    if (int.TryParse(planetInfo.GetValue("printTo"), out temp))
+                    {
+                        printTo = temp;
+                    }
+                    else
+                    {
+                        printTo = null;
+                    }
+
                     if (!body.ocean)
                     {
                         oceanFloor = true;
@@ -154,7 +195,7 @@ namespace SigmaRandomPlugin
         void GeneratePQSMaps()
         {
             // Textures
-            Texture2D heightMap = new Texture2D(tile, tile, TextureFormat.RGB24, true);
+            Texture2D heightMap = new Texture2D(tile, tile, TextureFormat.ARGB32, true);
             Texture2D normalMap = new Texture2D(tile, tile, TextureFormat.ARGB32, true);
             Texture2D slopeMap = new Texture2D(tile, tile, TextureFormat.RGB24, true);
             Texture2D colorMap = new Texture2D(tile, tile, TextureFormat.ARGB32, true);
@@ -163,15 +204,15 @@ namespace SigmaRandomPlugin
             Texture2D biomeMap = new Texture2D(tile, tile, TextureFormat.RGB24, true);
 
             // Arrays
-            Color[] heightMapValues = new Color[tile * tile];
             double[] terrainHeightValues = new double[(tile + 2) * (tile + 2)];
+            Color[] heightMapValues = new Color[tile * tile];
             Color[] colorMapValues = new Color[tile * tile];
             Color[] oceanMapValues = new Color[tile * tile];
             Color[] biomeMapValues = new Color[tile * tile];
 
             // Edges
-            int firstY = width;
-            int lastY = width;
+            int? firstY = null;
+            int? lastY = null;
 
 
             // reset current
@@ -201,7 +242,7 @@ namespace SigmaRandomPlugin
             {
                 for (int i = 0; i < width; i += tile)
                 {
-                    if (printTile.Count == 0 || printTile.Contains(current))
+                    if (Print(current))
                     {
                         // Loop through the pixels
                         for (int y = -1; y < tile + 1; y++)
@@ -244,7 +285,29 @@ namespace SigmaRandomPlugin
                                         // Set the Pixels
                                         if (exportHeightMap && x > -1 && y > -1 && x < tile && y < tile)
                                         {
-                                            heightMapValues[(y * tile) + x] = new Color((float)height, (float)height, (float)height);
+                                            Color color = Color.black;
+
+                                            for (int k = 0; k < altitudeColor?.Count; k++)
+                                            {
+                                                KeyValuePair<double, Color> element1 = altitudeColor.ElementAt(k);
+
+                                                if (k == altitudeColor?.Count - 1)
+                                                {
+                                                    color = element1.Value;
+                                                }
+                                                else
+                                                {
+                                                    KeyValuePair<double, Color> element2 = altitudeColor.ElementAt(k + 1);
+
+                                                    if (element2.Key > height)
+                                                    {
+                                                        color = Color.Lerp(element1.Value, element2.Value, (float)((height - element1.Key) / (element2.Key - element1.Key)));
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
+                                            heightMapValues[(y * tile) + x] = color;
                                         }
 
                                         if (exportNormalMap || exportSlopeMap || exportSatelliteMap)
@@ -273,7 +336,7 @@ namespace SigmaRandomPlugin
                                         // Adjust the Color
                                         Color color = data.vertColor.A(1f);
                                         if (!oceanFloor && data.vertHeight < pqs.radius)
-                                            color = pqs.mapOceanColor.A(1f);
+                                            color = oceanColor;
 
                                         // Set the Pixels
                                         colorMapValues[(y * tile) + x] = color;
@@ -282,7 +345,7 @@ namespace SigmaRandomPlugin
                                     if (body.ocean && (exportOceanMap || exportSatelliteMap) && x > -1 && y > -1 && x < tile && y < tile)
                                     {
                                         // Adjust the Color
-                                        Color color = data.vertHeight < pqs.radius ? pqs.mapOceanColor.A(1f) : new Color(0, 0, 0, 0);
+                                        Color color = data.vertHeight < pqs.radius ? oceanColor : new Color(0, 0, 0, 0);
 
                                         // Set the Pixels
                                         oceanMapValues[(y * tile) + x] = color;
@@ -396,7 +459,16 @@ namespace SigmaRandomPlugin
             DestroyImmediate(biomeMap);
         }
 
-        void CalculateSlope(double[] normalMapValues, PQS pqs, int firstY, int lastY, ref Texture2D normalMap, ref Texture2D slopeMap)
+        bool Print(int current)
+        {
+            bool from = (current >= printFrom) && !(current > printTo);
+            bool to = (current <= printTo) && !(current < printFrom);
+            bool tile = printTile.Contains(current);
+
+            return from || to || tile || (printTile.Count == 0 && printFrom == null && printTo == null);
+        }
+
+        void CalculateSlope(double[] normalMapValues, PQS pqs, int? firstY, int? lastY, ref Texture2D normalMap, ref Texture2D slopeMap)
         {
             double dS = pqs.radius * 2 * Math.PI / width;
 
@@ -408,7 +480,13 @@ namespace SigmaRandomPlugin
                     if (y == firstY || y == lastY)
                     {
                         if (exportNormalMap || exportSatelliteMap)
-                            normalMap.SetPixel(x, y, new Color(0.5f, 0.5f, 0.5f, 0.5f));
+                        {
+                            if (y == firstY)
+                                normalMap.SetPixel(x, y, new Color(1, 0, 0, 1));
+
+                            if (y == lastY)
+                                normalMap.SetPixel(x, y, new Color(0, 1, 0, 1));
+                        }
 
                         if (exportSlopeMap)
                             slopeMap.SetPixel(x, y, slopeMin);
@@ -466,6 +544,30 @@ namespace SigmaRandomPlugin
                 }
             }
         }
+
+        List<KeyValuePair<double, Color>> Parse(ConfigNode node, List<KeyValuePair<double, Color>> defaultValue)
+        {
+            for (int i = 0; i < node?.values?.Count; i++)
+            {
+                ConfigNode.Value val = node.values[i];
+
+                defaultValue = defaultValue ?? new List<KeyValuePair<double, Color>>();
+
+                if (double.TryParse(val.name, out double alt) && TryParse.Color(val.value, out Color color))
+                {
+                    defaultValue.Add(new KeyValuePair<double, Color>(alt, color));
+                }
+                else
+                {
+                    defaultValue = null;
+                    break;
+                }
+
+                defaultValue = defaultValue.OrderBy(v => v.Key).ToList();
+            }
+
+            return defaultValue;
+        }
     }
 
     static class TryParse
@@ -482,7 +584,7 @@ namespace SigmaRandomPlugin
 
             valid = array?.Length > 2 && float.TryParse(array[0], out r) && float.TryParse(array[1], out g) && float.TryParse(array[2], out b);
 
-            color = new Color(r, g, b);
+            color = valid ? new Color(r, g, b) : UnityEngine.Color.white;
 
             return valid;
         }
