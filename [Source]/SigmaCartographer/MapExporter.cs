@@ -32,12 +32,13 @@ namespace SigmaRandomPlugin
         static bool leaflet = false;
 
         static bool oceanFloor = true;
+        static Color oceanColor = new Color(0.1f, 0.1f, 0.2f, 1f);
         static double LAToffset = 0;
         static double LONoffset = 0;
-        static Dictionary<double, Color> altitudeColor = null;
+        static List<KeyValuePair<double, Color>> altitudeColor = null;
         static float normalStrength = 1;
-        Color slopeMin = new Color(0.2f, 0.3f, 0.4f);
-        Color slopeMax = new Color(0.9f, 0.6f, 0.5f);
+        static Color slopeMin = new Color(0.2f, 0.3f, 0.4f);
+        static Color slopeMax = new Color(0.9f, 0.6f, 0.5f);
         static List<int> printTile = new List<int>();
         static int? printFrom = null;
         static int? printTo = null;
@@ -93,6 +94,11 @@ namespace SigmaRandomPlugin
                         oceanFloor = true;
                     }
 
+                    if (!TryParse.Color(planetInfo.GetValue("oceanColor"), out oceanColor))
+                    {
+                        oceanColor = body?.pqsController?.mapOceanColor ?? new Color(0.1f, 0.1f, 0.2f, 1f);
+                    }
+
                     if (!double.TryParse(planetInfo.GetValue("LAToffset"), out LAToffset))
                     {
                         LAToffset = 0;
@@ -110,10 +116,10 @@ namespace SigmaRandomPlugin
 
                     if (altitudeColor == null)
                     {
-                        altitudeColor = new Dictionary<double, Color>
+                        altitudeColor = new List<KeyValuePair<double, Color>>
                         {
-                            { 0, Color.black },
-                            { 1, Color.white }
+                            new KeyValuePair<double, Color>(0, Color.black),
+                            new KeyValuePair<double, Color>(1, Color.white)
                         };
                     }
 
@@ -330,7 +336,7 @@ namespace SigmaRandomPlugin
                                         // Adjust the Color
                                         Color color = data.vertColor.A(1f);
                                         if (!oceanFloor && data.vertHeight < pqs.radius)
-                                            color = pqs.mapOceanColor.A(1f);
+                                            color = oceanColor;
 
                                         // Set the Pixels
                                         colorMapValues[(y * tile) + x] = color;
@@ -339,7 +345,7 @@ namespace SigmaRandomPlugin
                                     if (body.ocean && (exportOceanMap || exportSatelliteMap) && x > -1 && y > -1 && x < tile && y < tile)
                                     {
                                         // Adjust the Color
-                                        Color color = data.vertHeight < pqs.radius ? pqs.mapOceanColor.A(1f) : new Color(0, 0, 0, 0);
+                                        Color color = data.vertHeight < pqs.radius ? oceanColor : new Color(0, 0, 0, 0);
 
                                         // Set the Pixels
                                         oceanMapValues[(y * tile) + x] = color;
@@ -539,17 +545,17 @@ namespace SigmaRandomPlugin
             }
         }
 
-        Dictionary<double, Color> Parse(ConfigNode node, Dictionary<double, Color> defaultValue)
+        List<KeyValuePair<double, Color>> Parse(ConfigNode node, List<KeyValuePair<double, Color>> defaultValue)
         {
             for (int i = 0; i < node?.values?.Count; i++)
             {
                 ConfigNode.Value val = node.values[i];
 
-                defaultValue = defaultValue ?? new Dictionary<double, Color>();
+                defaultValue = defaultValue ?? new List<KeyValuePair<double, Color>>();
 
                 if (double.TryParse(val.name, out double alt) && TryParse.Color(val.value, out Color color))
                 {
-                    defaultValue.Add(alt, color);
+                    defaultValue.Add(new KeyValuePair<double, Color>(alt, color));
                 }
                 else
                 {
@@ -557,7 +563,7 @@ namespace SigmaRandomPlugin
                     break;
                 }
 
-                defaultValue.OrderBy(v => v.Key);
+                defaultValue = defaultValue.OrderBy(v => v.Key).ToList();
             }
 
             return defaultValue;
@@ -578,7 +584,7 @@ namespace SigmaRandomPlugin
 
             valid = array?.Length > 2 && float.TryParse(array[0], out r) && float.TryParse(array[1], out g) && float.TryParse(array[2], out b);
 
-            color = new Color(r, g, b);
+            color = valid ? new Color(r, g, b) : UnityEngine.Color.white;
 
             return valid;
         }
