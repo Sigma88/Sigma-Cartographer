@@ -388,10 +388,10 @@ namespace SigmaRandomPlugin
                         if (exportHeightMap)
                         {
                             Directory.CreateDirectory(exportFolder + "HeightMap/" + folder);
-                            
+
                             if (flipH) FlipH(ref heightMap);
                             if (flipV) FlipV(ref heightMap);
-                            
+
                             File.WriteAllBytes(exportFolder + "HeightMap/" + folder + fileName, heightMap.EncodeToPNG());
                             File.WriteAllLines
                             (
@@ -410,60 +410,60 @@ namespace SigmaRandomPlugin
                         if (exportNormalMap)
                         {
                             Directory.CreateDirectory(exportFolder + "NormalMap/" + folder);
-                            
+
                             if (flipH) FlipH(ref normalMap);
                             if (flipV) FlipV(ref normalMap);
-                            
+
                             File.WriteAllBytes(exportFolder + "NormalMap/" + folder + fileName, normalMap.EncodeToPNG());
                         }
 
                         if (exportSlopeMap)
                         {
                             Directory.CreateDirectory(exportFolder + "SlopeMap/" + folder);
-                            
+
                             if (flipH) FlipH(ref slopeMap);
                             if (flipV) FlipV(ref slopeMap);
-                            
+
                             File.WriteAllBytes(exportFolder + "SlopeMap/" + folder + fileName, slopeMap.EncodeToPNG());
                         }
 
                         if (exportColorMap)
                         {
                             Directory.CreateDirectory(exportFolder + "ColorMap/" + folder);
-                            
+
                             if (flipH) FlipH(ref colorMap);
                             if (flipV) FlipV(ref colorMap);
-                            
+
                             File.WriteAllBytes(exportFolder + "ColorMap/" + folder + fileName, colorMap.EncodeToPNG());
                         }
 
                         if (exportOceanMap)
                         {
                             Directory.CreateDirectory(exportFolder + "OceanMap/" + folder);
-                            
+
                             if (flipH) FlipH(ref oceanMap);
                             if (flipV) FlipV(ref oceanMap);
-                            
+
                             File.WriteAllBytes(exportFolder + "OceanMap/" + folder + fileName, oceanMap.EncodeToPNG());
                         }
 
                         if (exportSatelliteMap)
                         {
                             Directory.CreateDirectory(exportFolder + "SatelliteMap/" + folder);
-                            
+
                             if (flipH) FlipH(ref satelliteMap);
                             if (flipV) FlipV(ref satelliteMap);
-                            
+
                             File.WriteAllBytes(exportFolder + "SatelliteMap/" + folder + fileName, satelliteMap.EncodeToPNG());
                         }
 
                         if (exportBiomeMap)
                         {
                             Directory.CreateDirectory(exportFolder + "BiomeMap/" + folder);
-                            
+
                             if (flipH) FlipH(ref biomeMap);
                             if (flipV) FlipV(ref biomeMap);
-                            
+
                             File.WriteAllBytes(exportFolder + "BiomeMap/" + folder + fileName, biomeMap.EncodeToPNG());
 
                             List<string> attributes = new string[] { "BiomeMap info", "", "Body = " + body.transform.name }.ToList();
