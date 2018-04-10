@@ -605,17 +605,17 @@ namespace SigmaRandomPlugin
 
         void FlipV(ref Texture2D texture)
         {
-            for (x = 0; x < texture?.width; x++)
+            for (int x = 0; x < texture?.width; x++)
             {
-                texture.SetPixels(x, 0, 1, texture.height, texture.GetPixels(x, 0, 1, texture.height).Reverse());
+                texture.SetPixels(x, 0, 1, texture.height, texture.GetPixels(x, 0, 1, texture.height).Reverse().ToArray());
             }
         }
 
         void FlipH(ref Texture2D texture)
         {
-            for (y = 0; y < texture?.height; y++)
+            for (int y = 0; y < texture?.height; y++)
             {
-                texture.SetPixels(0, y, texture.width, 1, texture.GetPixels(0, y, texture.width, 1).Reverse());
+                texture.SetPixels(0, y, texture.width, 1, texture.GetPixels(0, y, texture.width, 1).Reverse().ToArray());
             }
         }
     }
