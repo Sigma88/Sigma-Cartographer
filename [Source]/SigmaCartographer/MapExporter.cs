@@ -382,8 +382,9 @@ namespace SigmaRandomPlugin
                             biomeMap.SetPixels(biomeMapValues);
 
                         // Serialize them to disk
-                        string folder = leaflet ? (current % (width / tile) + "/") : "";
-                        string fileName = leaflet ? (current / (width / tile)) + ".png" : "Tile" + current.ToString("D4") + ".png";
+                        int position = Flip(current);
+                        string folder = leaflet ? (position % (width / tile) + "/") : "";
+                        string fileName = leaflet ? (position / (width / tile)) + ".png" : "Tile" + position.ToString("D4") + ".png";
 
                         if (exportHeightMap)
                         {
@@ -601,6 +602,21 @@ namespace SigmaRandomPlugin
             }
 
             return defaultValue;
+        }
+
+        int Flip(int n)
+        {
+            if (flipV)
+            {
+                n = ((width / tile / 2) - 1 - (n * tile / width)) * width / tile + (n % (width / tile));
+            }
+
+            if (flipH)
+            {
+                n = (n * tile / width) * width / tile + width / tile - 1 - (n % (width / tile));
+            }
+
+            return n;
         }
 
         void FlipV(ref Texture2D texture)
