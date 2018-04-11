@@ -1,3 +1,9 @@
+**v0.3.0**
+
+- Added flipH
+- Added flipV
+
+
 **v0.2.0**
 
 - Expanded printTile system
