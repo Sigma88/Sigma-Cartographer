@@ -235,10 +235,21 @@ namespace SigmaRandomPlugin
             }
 
             // Get the mods
-            Action<PQS.VertexBuildData> modOnVertexBuildHeight = (Action<PQS.VertexBuildData>)Delegate.CreateDelegate(
-                typeof(Action<PQS.VertexBuildData>),
-                pqs,
-                typeof(PQS).GetMethod("Mod_OnVertexBuildHeight", BindingFlags.Instance | BindingFlags.NonPublic));
+            #if !KSP131
+            Action<PQS.VertexBuildData, Boolean> modOnVertexBuildHeight = 
+                (Action<PQS.VertexBuildData, Boolean>) Delegate.CreateDelegate(
+                    typeof(Action<PQS.VertexBuildData, Boolean>),
+                    pqs,
+                    typeof(PQS).GetMethod("Mod_OnVertexBuildHeight",
+                        BindingFlags.Instance | BindingFlags.NonPublic));
+            #else
+                Action<PQS.VertexBuildData> modOnVertexBuildHeight =
+                    (Action<PQS.VertexBuildData>) Delegate.CreateDelegate(
+                        typeof(Action<PQS.VertexBuildData>),
+                        pqs,
+                        typeof(PQS).GetMethod("Mod_OnVertexBuildHeight",
+                            BindingFlags.Instance | BindingFlags.NonPublic));
+                #endif
             Action<PQS.VertexBuildData> modOnVertexBuild = (Action<PQS.VertexBuildData>)Delegate.CreateDelegate(
                 typeof(Action<PQS.VertexBuildData>),
                 pqs,
@@ -273,7 +284,11 @@ namespace SigmaRandomPlugin
                                     };
 
                                     // Build from the Mods 
+                                    #if !KSP131
+                                    modOnVertexBuildHeight(data, true);
+                                    #else
                                     modOnVertexBuildHeight(data);
+                                    #endif
 
                                     if (exportHeightMap || exportNormalMap || exportSlopeMap || exportSatelliteMap)
                                     {
