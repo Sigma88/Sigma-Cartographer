@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Reflection;
 
 
-namespace SigmaRandomPlugin
+namespace SigmaCartographerPlugin
 {
     [KSPAddon(KSPAddon.Startup.MainMenu, false)]
     class MapExporter : MonoBehaviour
