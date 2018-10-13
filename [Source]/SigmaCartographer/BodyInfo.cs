@@ -1,121 +1,197 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using UnityEngine;
 
 
-namespace SigmaRandomPlugin
+namespace SigmaCartographerPlugin
 {
     [KSPAddon(KSPAddon.Startup.MainMenu, false)]
     class BodyInfo : MonoBehaviour
     {
-        static string[] info = new string[9];
+        static double accuracy = 0.5;
+        static string[] text = new string[16];
 
         void Start()
         {
-            UrlDir.UrlConfig[] nodes = GameDatabase.Instance?.GetConfigs("SigmaCartographer");
+            List<string> info = null;
 
-            foreach (var node in nodes)
+            ConfigNode bodyInfo = UserSettings.ConfigNode.GetNode("Info");
+
+            if (bodyInfo != null)
             {
-                foreach (var bodyInfo in node.config.GetNodes("Info"))
+                info = info ?? new List<string>();
+
+                accuracy = double.TryParse(bodyInfo.GetValue("accuracy"), out double parsed) ? parsed : accuracy;
+
+                string[] body = bodyInfo.GetValues("body");
+
+                for (int i = 0; i < body.Length; i++)
                 {
-                    foreach (var bodyName in bodyInfo.GetValues("body"))
-                    {
-                        CelestialBody body = FlightGlobals.Bodies.FirstOrDefault(p => p.transform.name == bodyName);
-                        if (body?.pqsController != null)
-                        {
-                            FirstPass(body);
-                        }
-                    }
+                    if (!info.Contains(body[i]))
+                        info.Add(body[i]);
+                }
+            }
+
+            if (info != null)
+            {
+                int n = info.Count;
+
+                if (n == 0)
+                    info = FlightGlobals.Bodies.Select(p => p.transform.name).ToList();
+
+                for (int i = 0; i < n; i++)
+                {
+                    string bodyName = info[i];
+                    CelestialBody body = FlightGlobals.Bodies.FirstOrDefault(p => p.transform.name == bodyName);
+
+                    if (body?.pqsController != null)
+                        FirstPass(body);
                 }
             }
         }
 
         void FirstPass(CelestialBody body)
         {
-            double lowest = double.MaxValue;
-            double highest = double.MinValue;
+            List<LLA> ALL = new List<LLA>();
 
-            Vector2d LatLonLo = new Vector2d();
-            Vector2d LatLonHi = new Vector2d();
+            double terrain = 0;
+            double surface = 0;
+            double underwater = 0;
 
-            for (double LON = -180; LON < 180; LON += 0.1)
+            for (double LON = -180 + accuracy / 2; LON < 180; LON += accuracy)
             {
-                for (double LAT = -90; LAT <= 90; LAT += 0.1)
+                for (double LAT = -90 + accuracy / 2; LAT < 90; LAT += accuracy)
                 {
                     double ALT = body.TerrainAltitude(LAT, LON, true);
 
-                    if (ALT < lowest)
+                    ALL.Add(new LLA(LAT, LON, ALT));
+
+                    if (ALT == 0) continue;
+
+                    double area = Math.PI * (Math.Cos((LAT - accuracy / 2) / 180 * Math.PI) + Math.Cos((LAT + accuracy / 2) / 180 * Math.PI)) / (4 * 180 / accuracy * 360 / accuracy);
+
+                    terrain += ALT * area;
+
+                    if (ALT > 0)
                     {
-                        lowest = ALT;
-                        LatLonLo = new Vector2d(LAT, LON);
+                        surface += ALT * area;
                     }
-                    if (ALT > highest)
+                    else
                     {
-                        highest = ALT;
-                        LatLonHi = new Vector2d(LAT, LON);
+                        underwater += area;
                     }
                 }
             }
-            Lowest(body, LatLonLo);
-            Highest(body, LatLonHi);
+
+            Lowest(body, accuracy, ALL.OrderBy(v => v.alt).Take(100));
+            Highest(body, accuracy, ALL.OrderByDescending(v => v.alt).Take(100));
+            Print(body, terrain, surface, underwater);
         }
 
-        void Lowest(CelestialBody body, Vector2d LatLon)
+        void Lowest(CelestialBody body, double delta, IEnumerable<LLA> ALL)
         {
-            double altitude = double.MaxValue;
-            double latitude = LatLon.x;
-            double longitude = LatLon.y;
-
-            for (double LON = LatLon.y - 0.1; LON <= LatLon.y + 0.1; LON += 0.001)
+            if (delta > 0.0001)
             {
-                for (double LAT = LatLon.x - 0.1; LAT <= LatLon.x + 0.1; LAT += 0.001)
+                List<LLA> BEST = new List<LLA>();
+
+                int n = ALL.Count();
+
+                for (int i = 0; i < n; i++)
                 {
-                    double ALT = body.TerrainAltitude(LAT, LON, true);
-                    if (ALT < altitude)
+                    LLA LatLon = ALL.ElementAt(i);
+
+                    for (double LON = LatLon.lon - delta / 2; LON <= LatLon.lon + delta / 2; LON += delta / 10)
                     {
-                        latitude = LAT;
-                        longitude = LON;
-                        altitude = ALT;
+                        for (double LAT = LatLon.lat - delta / 2; LAT <= LatLon.lat + delta / 2; LAT += delta / 10)
+                        {
+                            double ALT = body.TerrainAltitude(LAT, LON, true);
+                            BEST.Add(new LLA(LAT, LON, ALT));
+                        }
                     }
                 }
-            }
 
-            info[0] = "Lowest Point";
-            info[1] = "LAT = " + latitude;
-            info[2] = "LON = " + longitude;
-            info[3] = "ALT = " + altitude;
-            info[4] = "";
+                Lowest(body, delta / 10, BEST.OrderBy(v => v.alt).Take(100));
+            }
+            else
+            {
+                LLA BEST = ALL.OrderBy(v => v.alt).FirstOrDefault();
+
+                text[0] = "Lowest Point";
+                text[1] = "LAT = " + BEST.lat;
+                text[2] = "LON = " + BEST.lon;
+                text[3] = "ALT = " + BEST.alt;
+                text[4] = "";
+            }
         }
 
-        void Highest(CelestialBody body, Vector2d LatLon)
+        void Highest(CelestialBody body, double delta, IEnumerable<LLA> ALL)
         {
-            double altitude = double.MinValue;
-            double latitude = LatLon.x;
-            double longitude = LatLon.y;
-
-            for (double LON = LatLon.y - 0.1; LON <= LatLon.y + 0.1; LON += 0.001)
+            if (delta > 0.001)
             {
-                for (double LAT = LatLon.x - 0.1; LAT <= LatLon.x + 0.1; LAT += 0.001)
+                List<LLA> BEST = new List<LLA>();
+
+                int n = ALL.Count();
+
+                for (int i = 0; i < n; i++)
                 {
-                    double ALT = body.TerrainAltitude(LAT, LON, true);
-                    if (ALT > altitude)
+                    LLA LatLon = ALL.ElementAt(i);
+
+                    for (double LON = LatLon.lon - delta / 2; LON <= LatLon.lon + delta / 2; LON += delta / 10)
                     {
-                        latitude = LAT;
-                        longitude = LON;
-                        altitude = ALT;
+                        for (double LAT = LatLon.lat - delta / 2; LAT <= LatLon.lat + delta / 2; LAT += delta / 10)
+                        {
+                            double ALT = body.TerrainAltitude(LAT, LON, true);
+                            BEST.Add(new LLA(LAT, LON, ALT));
+                        }
                     }
                 }
-            }
 
-            info[5] = "Highest Point";
-            info[6] = "LAT = " + latitude;
-            info[7] = "LON = " + longitude;
-            info[8] = "ALT = " + altitude;
+                Highest(body, delta / 10, BEST.OrderByDescending(v => v.alt).Take(100));
+            }
+            else
+            {
+                LLA BEST = ALL.OrderByDescending(v => v.alt).FirstOrDefault();
+
+                text[5] = "Highest Point";
+                text[6] = "LAT = " + BEST.lat;
+                text[7] = "LON = " + BEST.lon;
+                text[8] = "ALT = " + BEST.alt;
+                text[9] = "";
+            }
+        }
+
+        void Print(CelestialBody body, double terrain, double surface, double underwater)
+        {
+            text[10] = "Average Elevation";
+            text[11] = "Terrain = " + terrain;
+            text[12] = "Surface = " + surface;
+            text[13] = "";
+            text[14] = "Water Coverage = " + Math.Round(100 * underwater, 2) + "%";
 
             string path = "GameData/Sigma/Cartographer/PluginData/" + body.transform.name + "/";
 
             Directory.CreateDirectory(path);
-            File.WriteAllLines(path + "Info.txt", info);
+            File.WriteAllLines(path + "Info.txt", text);
+        }
+    }
+
+    internal class LLA
+    {
+        internal double lat;
+        internal double lon;
+        internal double alt;
+
+        internal LLA()
+        {
+        }
+
+        internal LLA(double lat, double lon, double alt)
+        {
+            this.lat = lat;
+            this.lon = lon;
+            this.alt = alt;
         }
     }
 }
