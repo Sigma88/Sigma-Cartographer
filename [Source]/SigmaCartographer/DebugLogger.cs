@@ -3,13 +3,13 @@
     internal static class Debug
     {
         internal static bool debug = false;
-        internal static string Tag = "[SigmaLog MAPS]";
+        internal static string Tag = "[SigmaLog SC]";
 
         internal static void Log(string message)
         {
             if (debug)
             {
-                UnityEngine.Debug.Log(Tag + ": " + message);
+                LOG(message);
             }
         }
 
@@ -17,8 +17,18 @@
         {
             if (debug)
             {
-                UnityEngine.Debug.Log(Tag + " " + Method + ": " + message);
+                LOG(Method, message);
             }
+        }
+
+        internal static void LOG(string message)
+        {
+            UnityEngine.Debug.Log(Tag + ": " + message);
+        }
+
+        internal static void LOG(string Method, string message)
+        {
+            UnityEngine.Debug.Log(Tag + " " + Method + ": " + message);
         }
     }
 }
