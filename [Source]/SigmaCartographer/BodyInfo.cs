@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace SigmaCartographerPlugin
 {
-    [KSPAddon(KSPAddon.Startup.MainMenu, false)]
+    [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     class BodyInfo : MonoBehaviour
     {
         static double accuracy = 0.5;
