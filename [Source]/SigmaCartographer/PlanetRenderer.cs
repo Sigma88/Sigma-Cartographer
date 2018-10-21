@@ -207,7 +207,7 @@ namespace SigmaCartographerPlugin
 
         static bool GetTextures(ref MeshRenderer renderer)
         {
-            if (source.StartsWith("FILEPATH"))
+            if (source.StartsWith("FILEPATH/"))
             {
                 Texture texture = Resources.FindObjectsOfTypeAll<Texture>().FirstOrDefault(t => t.name == source.Substring(9));
                 if (texture == null) return false;

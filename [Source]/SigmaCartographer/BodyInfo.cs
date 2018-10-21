@@ -10,7 +10,7 @@ namespace SigmaCartographerPlugin
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     class BodyInfo : MonoBehaviour
     {
-        static double accuracy = 0.5;
+        static double definition = 0.5;
         static string[] text = new string[16];
 
         void Start()
@@ -23,7 +23,7 @@ namespace SigmaCartographerPlugin
             {
                 info = info ?? new List<string>();
 
-                accuracy = double.TryParse(bodyInfo.GetValue("accuracy"), out double parsed) ? parsed : accuracy;
+                definition = double.TryParse(bodyInfo.GetValue("definition"), out double parsed) ? parsed : definition;
 
                 string[] body = bodyInfo.GetValues("body");
 
@@ -60,9 +60,9 @@ namespace SigmaCartographerPlugin
             double surface = 0;
             double underwater = 0;
 
-            for (double LON = -180 + accuracy / 2; LON < 180; LON += accuracy)
+            for (double LON = -180 + definition / 2; LON < 180; LON += definition)
             {
-                for (double LAT = -90 + accuracy / 2; LAT < 90; LAT += accuracy)
+                for (double LAT = -90 + definition / 2; LAT < 90; LAT += definition)
                 {
                     double ALT = body.TerrainAltitude(LAT, LON, true);
 
@@ -70,7 +70,7 @@ namespace SigmaCartographerPlugin
 
                     if (ALT == 0) continue;
 
-                    double area = Math.PI * (Math.Cos((LAT - accuracy / 2) / 180 * Math.PI) + Math.Cos((LAT + accuracy / 2) / 180 * Math.PI)) / (4 * 180 / accuracy * 360 / accuracy);
+                    double area = Math.PI * (Math.Cos((LAT - definition / 2) / 180 * Math.PI) + Math.Cos((LAT + definition / 2) / 180 * Math.PI)) / (4 * 180 / definition * 360 / definition);
 
                     terrain += ALT * area;
 
@@ -85,8 +85,8 @@ namespace SigmaCartographerPlugin
                 }
             }
 
-            Lowest(body, accuracy, ALL.OrderBy(v => v.alt).Take(100));
-            Highest(body, accuracy, ALL.OrderByDescending(v => v.alt).Take(100));
+            Lowest(body, definition, ALL.OrderBy(v => v.alt).Take(100));
+            Highest(body, definition, ALL.OrderByDescending(v => v.alt).Take(100));
             Print(body, terrain, surface, underwater);
         }
 
