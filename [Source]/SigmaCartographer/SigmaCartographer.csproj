@@ -33,7 +33,8 @@
   <ItemGroup>
     <Compile Include="DebugLogger.cs" />
     <Compile Include="MapGenerator.cs" />
-    <Compile Include="PlanetPics.cs" />
+    <Compile Include="PlanetRenderer.cs" />
+    <Compile Include="PreviewGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BodyInfo.cs" />
     <Compile Include="SigmaCartographer.cs" />

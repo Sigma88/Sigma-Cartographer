@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System;
 
 
 namespace SigmaCartographerPlugin
@@ -26,7 +25,6 @@ namespace SigmaCartographerPlugin
             for (int i = 0; i < pics.Length; i++)
             {
                 PlanetRenderer.LoadSettings(pics[i]);
-                PlanetRenderer.GetTexture();
                 PlanetRenderer.RenderPlanet();
                 MapGenerator.CleanUp();
             }

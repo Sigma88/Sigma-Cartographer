@@ -44,6 +44,7 @@ namespace SigmaCartographerPlugin
         static bool flipV = false;
         static bool flipH = false;
 
+        static bool alpha = false;
         static bool oceanFloor = true;
         static Color oceanColor = new Color(0.1f, 0.1f, 0.2f, 1f);
         static double LAToffset = 0;
@@ -113,6 +114,8 @@ namespace SigmaCartographerPlugin
 
             bool.TryParse(node.GetValue("flipH"), out flipH);
 
+            bool.TryParse(node.GetValue("alpha"), out alpha);
+
             if (!bool.TryParse(node.GetValue("oceanFloor"), out oceanFloor))
             {
                 oceanFloor = true;
@@ -141,10 +144,10 @@ namespace SigmaCartographerPlugin
             if (altitudeColor == null)
             {
                 altitudeColor = new List<KeyValuePair<double, Color>>
-                        {
-                            new KeyValuePair<double, Color>(0, Color.black),
-                            new KeyValuePair<double, Color>(1, Color.white)
-                        };
+                {
+                    new KeyValuePair<double, Color>(0, Color.black),
+                    new KeyValuePair<double, Color>(1, Color.white)
+                };
             }
 
             if (!float.TryParse(node.GetValue("normalStrength"), out normalStrength))
@@ -210,10 +213,27 @@ namespace SigmaCartographerPlugin
             }
         }
 
-        internal static void GeneratePQSMaps(string subfolder = "")
+        internal static void GeneratePQSMaps(string subfolder = "", bool split = false)
         {
             // If no exports are required, end here
             if (!exportAny && !exportBiomeMap) return;
+
+            // If normal maps should be kept separated
+            if (split & satelliteAny)
+            {
+                exportNormalMap = true;
+
+                if (exportSatelliteHeight)
+                    exportHeightMap = true;
+                if (exportSatelliteSlope)
+                    exportSlopeMap = true;
+                if (exportSatelliteMap)
+                    exportColorMap = true;
+                if (exportSatelliteBiome)
+                    exportBiomeMap = true;
+
+                satelliteAny = false;
+            }
 
             // Textures
             try
@@ -386,9 +406,15 @@ namespace SigmaCartographerPlugin
                                                 modOnVertexBuild(data);
 
                                                 // Adjust the Color
-                                                Color color = data.vertColor.A(1f);
-                                                if (!oceanFloor && data.vertHeight < pqs.radius)
-                                                    color = oceanColor;
+                                                Color color = data.vertColor.A(1);
+
+                                                if (!oceanFloor)
+                                                {
+                                                    if (data.vertHeight > pqs.radius)
+                                                        color.a = alpha ? 0 : 1;
+                                                    else
+                                                        color = oceanColor;
+                                                }
 
                                                 // Set the Pixels
                                                 colorMapValues[(y * tile) + x] = color;
@@ -429,15 +455,31 @@ namespace SigmaCartographerPlugin
                         try
                         {
                             if (exportHeightMap || exportSatelliteHeight)
+                            {
                                 heightMap.SetPixels(heightMapValues);
+                                heightMap.Apply();
+                            }
                             if (exportNormalMap || exportSlopeMap || satelliteAny)
+                            {
                                 CalculateSlope(terrainHeightValues, pqs, firstY, lastY, ref normalMap, ref slopeMap);
+                                normalMap.Apply();
+                                slopeMap.Apply();
+                            }
                             if (exportColorMap || exportSatelliteMap)
+                            {
                                 colorMap.SetPixels(colorMapValues);
+                                colorMap.Apply();
+                            }
                             if (exportOceanMap)
+                            {
                                 oceanMap.SetPixels(oceanMapValues);
+                                oceanMap.Apply();
+                            }
                             if (exportBiomeMap || exportSatelliteBiome)
+                            {
                                 biomeMap.SetPixels(biomeMapValues);
+                                biomeMap.Apply();
+                            }
                         }
                         catch
                         {
@@ -458,18 +500,18 @@ namespace SigmaCartographerPlugin
                                 if (flipH) Utility.FlipH(ref heightMap);
                                 if (flipV) Utility.FlipV(ref heightMap);
 
-                                ExportPQSMap(ref heightMap, subfolder + "HeightMap/", fileName);
+                                ExportPQSMap(ref heightMap, subfolder + "HeightMap/", folder + fileName);
 
                                 File.WriteAllLines
                                 (
                                     exportFolder + subfolder + "HeightMap/Info.txt",
                                     new string[]
                                     {
-                                    "HeightMap info",
-                                    "",
-                                    "Body = " + body.transform.name,
-                                    "deformity = " + pqs.radiusDelta,
-                                    "offset = " + (pqs.radiusMin - pqs.radius)
+                                        "HeightMap info",
+                                        "",
+                                        "Body = " + body.transform.name,
+                                        "deformity = " + pqs.radiusDelta,
+                                        "offset = " + (pqs.radiusMin - pqs.radius)
                                     }
                                 );
                             }
@@ -479,7 +521,7 @@ namespace SigmaCartographerPlugin
                                 if (flipH) Utility.FlipH(ref normalMap);
                                 if (flipV) Utility.FlipV(ref normalMap);
 
-                                ExportPQSMap(ref normalMap, subfolder + "NormalMap/", fileName);
+                                ExportPQSMap(ref normalMap, subfolder + "NormalMap/", folder + fileName);
                             }
 
                             if (exportSlopeMap)
@@ -487,7 +529,7 @@ namespace SigmaCartographerPlugin
                                 if (flipH) Utility.FlipH(ref slopeMap);
                                 if (flipV) Utility.FlipV(ref slopeMap);
 
-                                ExportPQSMap(ref slopeMap, subfolder + "SlopeMap/", fileName);
+                                ExportPQSMap(ref slopeMap, subfolder + "SlopeMap/", folder + fileName);
                             }
 
                             if (exportColorMap)
@@ -495,7 +537,7 @@ namespace SigmaCartographerPlugin
                                 if (flipH) Utility.FlipH(ref colorMap);
                                 if (flipV) Utility.FlipV(ref colorMap);
 
-                                ExportPQSMap(ref colorMap, subfolder + "ColorMap/", fileName);
+                                ExportPQSMap(ref colorMap, subfolder + "ColorMap/", folder + fileName);
                             }
 
                             if (exportOceanMap)
@@ -503,7 +545,7 @@ namespace SigmaCartographerPlugin
                                 if (flipH) Utility.FlipH(ref oceanMap);
                                 if (flipV) Utility.FlipV(ref oceanMap);
 
-                                ExportPQSMap(ref oceanMap, subfolder + "OceanMap/", fileName);
+                                ExportPQSMap(ref oceanMap, subfolder + "OceanMap/", folder + fileName);
                             }
 
                             if (exportBiomeMap)
@@ -511,7 +553,7 @@ namespace SigmaCartographerPlugin
                                 if (flipH) Utility.FlipH(ref biomeMap);
                                 if (flipV) Utility.FlipV(ref biomeMap);
 
-                                ExportPQSMap(ref biomeMap, subfolder + "BiomeMap/", fileName);
+                                ExportPQSMap(ref biomeMap, subfolder + "BiomeMap/", folder + fileName);
 
                                 List<string> attributes = new string[] { "BiomeMap info", "", "Body = " + body.transform.name }.ToList();
                                 foreach (var biome in body.BiomeMap.Attributes)
