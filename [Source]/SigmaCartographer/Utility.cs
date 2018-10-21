@@ -37,6 +37,7 @@ namespace SigmaCartographerPlugin
             {
                 texture.SetPixels(x, 0, 1, texture.height, texture.GetPixels(x, 0, 1, texture.height).Reverse().ToArray());
             }
+            texture.Apply();
         }
 
         internal static void FlipH(ref Texture2D texture)
@@ -45,36 +46,42 @@ namespace SigmaCartographerPlugin
             {
                 texture.SetPixels(0, y, texture.width, 1, texture.GetPixels(0, y, texture.width, 1).Reverse().ToArray());
             }
+            texture.Apply();
         }
-        
-        internal static Texture2D CreateReadable(Texture2D original)
+
+        static Texture2D _black;
+        internal static Texture2D black
         {
-            // Checks
-            if (original == null) return null;
-            if (original.width == 0 || original.height == 0) return null;
+            get
+            {
+                if (!_black)
+                {
+                    _black = new Texture2D(1, 1);
+                    _black.SetPixel(0, 0, new Color(0, 0, 0, 1));
+                    _black.Apply();
+                }
 
-            // Create the new texture
-            Texture2D finalTexture = new Texture2D(original.width, original.height);
-
-            // isn't read or writeable ... we'll have to get tricksy
-            RenderTexture rt = RenderTexture.GetTemporary(original.width, original.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, 1);
-            Graphics.Blit(original, rt);
-            RenderTexture.active = rt;
-
-            // Load new texture
-            finalTexture.ReadPixels(new Rect(0, 0, finalTexture.width, finalTexture.height), 0, 0);
-
-            // Kill the old one
-            RenderTexture.active = null;
-            RenderTexture.ReleaseTemporary(rt);
-
-            // Return
-            return finalTexture;
+                return _black;
+            }
         }
     }
 
     internal static class TryParse
     {
+        internal static bool Color(string s, out Color? color)
+        {
+            if (Color(s, out Color c))
+            {
+                color = c;
+                return true;
+            }
+            else
+            {
+                color = null;
+                return false;
+            }
+        }
+
         internal static bool Color(string s, out Color color)
         {
             bool valid = false;
@@ -82,12 +89,21 @@ namespace SigmaCartographerPlugin
             float r = 0;
             float g = 0;
             float b = 0;
+            float a = 1;
 
             string[] array = s?.Split(',');
 
             valid = array?.Length > 2 && float.TryParse(array[0], out r) && float.TryParse(array[1], out g) && float.TryParse(array[2], out b);
 
-            color = valid ? new Color(r, g, b) : UnityEngine.Color.white;
+            if (valid && array?.Length > 3)
+            {
+                if (!float.TryParse(array[3], out a))
+                {
+                    valid = false;
+                }
+            }
+
+            color = valid ? new Color(r, g, b, a) : new Color(1, 1, 1, 1);
 
             return valid;
         }
