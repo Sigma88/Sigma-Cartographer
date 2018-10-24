@@ -2,28 +2,27 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using UnityEngine;
 
 
 namespace SigmaCartographerPlugin
 {
-    [KSPAddon(KSPAddon.Startup.MainMenu, true)]
-    class BodyInfo : MonoBehaviour
+    internal static class BodyInfo
     {
         static double definition = 0.5;
         static string[] text = new string[16];
 
-        void Start()
+        internal static void GetInfo(ConfigNode bodyInfo)
         {
             List<string> info = null;
-
-            ConfigNode bodyInfo = UserSettings.ConfigNode.GetNode("Info");
 
             if (bodyInfo != null)
             {
                 info = info ?? new List<string>();
 
-                definition = double.TryParse(bodyInfo.GetValue("definition"), out double parsed) ? parsed : definition;
+                if (!double.TryParse(bodyInfo.GetValue("definition"), out definition))
+                {
+                    definition = 0.5;
+                }
 
                 string[] body = bodyInfo.GetValues("body");
 
@@ -39,7 +38,10 @@ namespace SigmaCartographerPlugin
                 int n = info.Count;
 
                 if (n == 0)
+                {
                     info = FlightGlobals.Bodies.Select(p => p.transform.name).ToList();
+                    n = info.Count();
+                }
 
                 for (int i = 0; i < n; i++)
                 {
@@ -52,7 +54,7 @@ namespace SigmaCartographerPlugin
             }
         }
 
-        void FirstPass(CelestialBody body)
+        static void FirstPass(CelestialBody body)
         {
             List<LLA> ALL = new List<LLA>();
 
@@ -90,7 +92,7 @@ namespace SigmaCartographerPlugin
             Print(body, terrain, surface, underwater);
         }
 
-        void Lowest(CelestialBody body, double delta, IEnumerable<LLA> ALL)
+        static void Lowest(CelestialBody body, double delta, IEnumerable<LLA> ALL)
         {
             if (delta > 0.0001)
             {
@@ -126,7 +128,7 @@ namespace SigmaCartographerPlugin
             }
         }
 
-        void Highest(CelestialBody body, double delta, IEnumerable<LLA> ALL)
+        static void Highest(CelestialBody body, double delta, IEnumerable<LLA> ALL)
         {
             if (delta > 0.001)
             {
@@ -162,13 +164,17 @@ namespace SigmaCartographerPlugin
             }
         }
 
-        void Print(CelestialBody body, double terrain, double surface, double underwater)
+        static void Print(CelestialBody body, double terrain, double surface, double underwater)
         {
             text[10] = "Average Elevation";
             text[11] = "Terrain = " + terrain;
-            text[12] = "Surface = " + surface;
-            text[13] = "";
-            text[14] = "Water Coverage = " + Math.Round(100 * underwater, 2) + "%";
+
+            if (body.ocean)
+            {
+                text[12] = "Surface = " + surface;
+                text[13] = "";
+                text[14] = "Water Coverage = " + Math.Round(100 * underwater, 2) + "%";
+            }
 
             string path = "GameData/Sigma/Cartographer/PluginData/" + body.transform.name + "/";
 

@@ -28,6 +28,13 @@ namespace SigmaCartographerPlugin
                 PlanetRenderer.RenderPlanet();
                 MapGenerator.CleanUp();
             }
+
+            ConfigNode[] info = UserSettings.ConfigNode.GetNodes("Info");
+
+            for (int i = 0; i < info.Length; i++)
+            {
+                BodyInfo.GetInfo(info[i]);
+            }
         }
     }
 }

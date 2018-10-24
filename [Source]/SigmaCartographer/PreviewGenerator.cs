@@ -155,12 +155,12 @@ namespace SigmaCartographerPlugin
             BackgroundColor = Color.clear;
         }
 
-        internal static Texture2D GenerateModelPreview(Transform model, Int32 width = 64, Int32 height = 64, Boolean shouldCloneModel = false)
+        internal static Texture2D GenerateModelPreview(Transform model, Int32 width, Int32 height, double lightLAT = 0, double lightLON = 0, Color? lightColor = null, Boolean shouldCloneModel = false)
         {
-            return GenerateModelPreviewWithShader(model, null, null, width, height, shouldCloneModel);
+            return GenerateModelPreviewWithShader(model, null, null, width, height, lightLAT, lightLON, lightColor, shouldCloneModel);
         }
 
-        internal static Texture2D GenerateModelPreviewWithShader(Transform model, Shader shader, String replacementTag, Int32 width = 64, Int32 height = 64, Boolean shouldCloneModel = false)
+        internal static Texture2D GenerateModelPreviewWithShader(Transform model, Shader shader, String replacementTag, Int32 width, Int32 height, double lightLAT = 0, double lightLON = 0, Color? lightColor = null, Boolean shouldCloneModel = false)
         {
             if (model == null || model.Equals(null))
                 return null;
@@ -169,13 +169,17 @@ namespace SigmaCartographerPlugin
             // The Light He called Day
             GameObject lightObject = new GameObject();
             Light light = lightObject.AddOrGetComponent<Light>();
-            lightObject.transform.position = new Vector3(17.2469177246094f, 56.2267150878906f, -36.3499984741211f);
+            lightObject.transform.position = new Vector3(0, 0, -36);
             lightObject.transform.rotation = new Quaternion(0.1f, 0.1f, -0.7f, -0.7f);
             light.intensity = 1.5f;
             light.shadowBias = 0.047f;
             light.shadows = LightShadows.Soft;
             light.type = LightType.Directional;
 
+            light.color = lightColor ?? Color.white;
+            lightObject.transform.RotateAround(model.position, Vector3.right, (float)lightLAT);
+            lightObject.transform.RotateAround(model.position, Vector3.down, (float)lightLON);
+            lightObject.transform.rotation = Quaternion.LookRotation(model.position - lightObject.transform.position, lightObject.transform.up);
 
             Texture2D result = null;
 

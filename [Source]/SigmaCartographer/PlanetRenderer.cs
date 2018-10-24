@@ -17,6 +17,8 @@ namespace SigmaCartographerPlugin
         static int size = 2048;
         static double LONoffset = 0;
         static double LAToffset = 0;
+        static double lightLAT = 0;
+        static double lightLON = 0;
         static string exportFolder = "";
         static bool oceanFloor = false;
         static Color background = Color.clear;
@@ -61,6 +63,16 @@ namespace SigmaCartographerPlugin
             if (!double.TryParse(node.GetValue("LONoffset"), out LONoffset))
             {
                 LONoffset = 0;
+            }
+
+            if (!double.TryParse(node.GetValue("lightLAT"), out lightLAT))
+            {
+                lightLAT = 0;
+            }
+
+            if (!double.TryParse(node.GetValue("lightLON"), out lightLON))
+            {
+                lightLON = 0;
             }
 
             if (!TryParse.Color(node.GetValue("backgroundColor"), out background))
@@ -194,7 +206,7 @@ namespace SigmaCartographerPlugin
                 }
 
                 // Generate
-                Texture2D finalImage = PreviewGenerator.GenerateModelPreview(sphere.transform, size, size);
+                Texture2D finalImage = PreviewGenerator.GenerateModelPreview(sphere.transform, size, size, lightLAT, lightLON);
 
                 // Export
                 ExportImage(ref finalImage, "Render/", (!string.IsNullOrEmpty(name) ? name + "/" : "") + "Image.png");
@@ -246,7 +258,7 @@ namespace SigmaCartographerPlugin
             else if (settings != null)
             {
                 MapGenerator.LoadSettings(settings);
-                MapGenerator.GeneratePQSMaps("Render/", true);
+                MapGenerator.GeneratePQSMaps("Render/" + (!string.IsNullOrEmpty(name) ? name + "/" : ""), true);
 
                 // MainTex
                 switch (source)
