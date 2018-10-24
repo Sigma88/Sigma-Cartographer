@@ -165,6 +165,18 @@ namespace SigmaCartographerPlugin
             if (model == null || model.Equals(null))
                 return null;
 
+
+            // The Light He called Day
+            GameObject lightObject = new GameObject();
+            Light light = lightObject.AddOrGetComponent<Light>();
+            lightObject.transform.position = new Vector3(17.2469177246094f, 56.2267150878906f, -36.3499984741211f);
+            lightObject.transform.rotation = new Quaternion(0.1f, 0.1f, -0.7f, -0.7f);
+            light.intensity = 1.5f;
+            light.shadowBias = 0.047f;
+            light.shadows = LightShadows.Soft;
+            light.type = LightType.Directional;
+
+
             Texture2D result = null;
 
             if (!model.gameObject.scene.IsValid() || !model.gameObject.scene.isLoaded)
@@ -218,7 +230,10 @@ namespace SigmaCartographerPlugin
                 }
 
                 if (!init)
+                {
+                    UnityEngine.Object.DestroyImmediate(lightObject);
                     return null;
+                }
 
                 boundsCenter = previewBounds.center;
                 Vector3 boundsExtents = previewBounds.extents;
@@ -308,6 +323,10 @@ namespace SigmaCartographerPlugin
                 if (renderCamera == m_previewRenderCamera)
                     cameraSetup.ApplySetup(renderCamera);
             }
+
+
+            // And the Darkness He called Night
+            UnityEngine.Object.DestroyImmediate(lightObject);
 
             return result;
         }

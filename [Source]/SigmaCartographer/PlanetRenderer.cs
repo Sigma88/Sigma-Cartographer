@@ -120,8 +120,8 @@ namespace SigmaCartographerPlugin
                     {
                         node.RemoveValues("width");
                         node.RemoveValues("tile");
-                        node.AddValue("width", size * 2);
-                        node.AddValue("tile", size * 2);
+                        node.AddValue("width", size);
+                        node.AddValue("tile", size);
                     }
 
                     // Failsafe
@@ -197,12 +197,12 @@ namespace SigmaCartographerPlugin
                 Texture2D finalImage = PreviewGenerator.GenerateModelPreview(sphere.transform, size, size);
 
                 // Export
-                ExportImage(ref finalImage, "Render/", (!string.IsNullOrEmpty(name) ? name + "/" : "") + ".png");
-                UnityEngine.Object.DestroyImmediate(finalImage);
+                ExportImage(ref finalImage, "Render/", (!string.IsNullOrEmpty(name) ? name + "/" : "") + "Image.png");
+                Object.DestroyImmediate(finalImage);
             }
 
             // CleanUp
-            UnityEngine.Object.DestroyImmediate(sphere);
+            Object.DestroyImmediate(sphere);
         }
 
         static bool GetTextures(ref MeshRenderer renderer)
