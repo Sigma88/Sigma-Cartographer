@@ -130,7 +130,7 @@ namespace SigmaCartographerPlugin
             }
             catch
             {
-                UnityEngine.Debug.Log("[SigmaLog SC] TryParse.Path: Specified path is not valid. (" + s + ")");
+                Debug.LOG("TryParse.Path", "ERROR - Specified path is not valid. (" + s + ")");
             }
 
             return false;
