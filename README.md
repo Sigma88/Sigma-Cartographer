@@ -31,28 +31,28 @@ The number of tiles generated is a function of the values of `width` and `tile`:
 
     (width / tile) * (width / tile) / 2
 
-| Key              | Purpose                                                                      | Default                    |
-| ---------------- | ---------------------------------------------------------------------------- | -------------------------- |
-| (map type)       | see below                                                                    | `colorMap = true`          |
-| `body`           | The celestial body for which to generate maps.                               | `body = Kerbin`            |
-| `width`          | The total width of the map. The height will automatically be half the width. | `width = 2048`             |
-| `tile`           | The width (and height) of a single tile. Should evenly divide `width`.       | `tile = 1024`              |
-| `exportFolder`   | Folder name (or path) to insert into the middle of the tile path.            | `exportFolder = `          |
-| `leaflet`        | If `true`, change the tile path to be compatible with Leaflet.js.            | `leaflet = false`          |
-| `flipV`          | If `true`, flip each tile vertically.                                        | `flipV = false`            |
-| `flipH`          | If `true`, flip each tile horizontally.                                      | `flipH = false`            |
-| `alpha`          | | `alpha = false`            |
-| `oceanFloor`     | | `oceanFloor = true`        |
-| `oceanColor`     | | `oceanColor = `            |
-| `LAToffset`      | | `LAToffset = 0`            |
-| `LONoffset`      | | `LONoffset = 0`            |
-| `normalStrength` | | `normalStrength = 1`       |
-| `slopeMin`       | | `slopeMin = 0.2,0.3,0.4,1` |
-| `slopeMax`       | | `slopeMax = 0.9,0.6,0.5,1` |
-| `printTile`      | | `printTile = `             |
-| `printFrom`      | | `printFrom = `             |
-| `printTo`        | | `printTo = `               |
-| `AltitudeColor`  | see below | see below |
+| Key              | Purpose                                                                      | Default                      |
+| ---------------- | ---------------------------------------------------------------------------- | ---------------------------- |
+| (map type)       | see below                                                                    | `colorMap = true`            |
+| `body`           | The celestial body for which to generate maps.                               | `body = Kerbin`              |
+| `width`          | The total width of the map. The height will automatically be half the width. | `width = 2048`               |
+| `tile`           | The width (and height) of a single tile. Should evenly divide `width`.       | `tile = 1024`                |
+| `exportFolder`   | Folder name (or path) to insert into the middle of the tile path.            | `exportFolder = `            |
+| `leaflet`        | If `true`, change the tile path to be compatible with Leaflet.js.            | `leaflet = false`            |
+| `flipV`          | If `true`, flip each tile vertically.                                        | `flipV = false`              |
+| `flipH`          | If `true`, flip each tile horizontally.                                      | `flipH = false`              |
+| `alpha`          | If `true`, add alpha channel information to the generated map.               | `alpha = false`              |
+| `oceanFloor`     | | `oceanFloor = true`          |
+| `oceanColor`     | The color to render the ocean. A comma-separated list (R,G,B,A).             | `oceanColor = 0.1,0.1,0.2,1` |
+| `LAToffset`      | The latitude of the viewpoint over the body.                                 | `LAToffset = 0`              |
+| `LONoffset`      | The longitude of the viewpoint over the body.                                | `LONoffset = 0`              |
+| `normalStrength` | A factor used when generating slope maps.                                    | `normalStrength = 1`         |
+| `slopeMin`       | The color to use for minimum slope when generating slope maps.               | `slopeMin = 0.2,0.3,0.4,1`   |
+| `slopeMax`       | The color to use for maximum slope when generating slope maps.               | `slopeMax = 0.9,0.6,0.5,1`   |
+| `printTile`      | List of specific tiles to render.                                            | `printTile = `               |
+| `printFrom`      | Start of the range of tiles to render.                                       | `printFrom = `               |
+| `printTo`        | End of the range of tiles to render.                                         | `printTo = `                 |
+| `AltitudeColor`  | List of colors used when generating maps.                                    | see below                    |
 
 #### Map types
 
@@ -67,9 +67,7 @@ The number of tiles generated is a function of the values of `width` and `tile`:
 * `satelliteSlope`
 * `slopeMap`
 
-Set the desired map type to `true`. Defaults to `colorMap = true` and others `false`.
-
-> Can more than one be set to `true`?
+Set the desired map type(s) to `true`. Defaults to `colorMap = true` and others `false`.
 
 #### `AltitudeColor`
 
@@ -85,27 +83,31 @@ AltitudeColor
 
 ### `Render`
 
-| Key               | Purpose                                        | Default           |
-| ----------------- | ---------------------------------------------- | ----------------- |
-| `texture`         | | see below         |
-| `body`            | | `body = Kerbin`   |
-| `size`            | | `size = 2048`     |
-| `exportFolder`    | subfolder     | `exportFolder = ` |
-| `name`            | sub-subfolder | `name = `         |
-| `oceanFloor`      | | `oceanFloor = true` |
-| `LAToffset`       | latitude of viewpoint over the body  | `LAToffset = 0` |
-| `LONoffset`       | longitude of viewpoint over the body | `LONoffset = 0` |
-| `backgroundColor` | background of the image (space)      | `backgroundColor = 0,0,0,0 `
-| `unlit`           | | `unlit = false` |
-| `_Color`          | _Color of the scaledspace material | `_Color = 1,1,1,1` |
-| `_SpecColor`      | _SpecColor of the scaledspace material | `_SpecColor = ` |
-| `_Shininess`      | _Shininess of the scaledspace material | `_Shininess = ` |
-| `alpha`           | (adds an alpha of zero to the land parts?) | `alpha = false` |
-| `oceanColor`      | | `oceanColor = ` |
-| `normalStrength`  | | `normalStrength = 1` |
-| `slopeMin`        | | `slopeMin = 0.2,0.3,0.4,1` |
-| `slopeMax`        | | `slopeMax = 0.9,0.6,0.5,1` |
-| `AltitudeColor`   | see above | see above |
+Generates a spherical rendering.
+
+The image is generated into `_body_/_exportFolder_/Render/_name_/Image.png`.
+
+| Key               | Purpose                                                                         | Default                      |
+| ----------------- | ------------------------------------------------------------------------------- | ---------------------------- |
+| `texture`         | The kind of image to render.                                                    | see below                    |
+| `body`            | The celestial body to render.                                                   | `body = Kerbin`              |
+| `size`            | The size of the base image, which will be transformed to a spherical rendering. | `size = 2048`                |
+| `exportFolder`    | Folder name (or path) to insert into the middle of the image path.              | `exportFolder = `            |
+| `name`            | Subfolder name (or path) to insert into the middle of the image path.           | `name = `                    |
+| `oceanFloor`      | | `oceanFloor = true`            |
+| `LAToffset`       | The latitude of the viewpoint over the body.                                    | `LAToffset = 0`              |
+| `LONoffset`       | The longitude of the viewpoint over the body.                                   | `LONoffset = 0`              |
+| `backgroundColor` | The color used for the background of the image.                                 | `backgroundColor = 0,0,0,0 ` |
+| `unlit`           | If `true`, | `unlit = false` |
+| `_Color`          | (_Color of the scaledspace material)                                            | `_Color = 1,1,1,1`           |
+| `_SpecColor`      | (_SpecColor of the scaledspace material)                                        | `_SpecColor = `              |
+| `_Shininess`      | (_Shininess of the scaledspace material)                                        | `_Shininess = `              |
+| `alpha`           | (adds an alpha of zero to the land parts?)                                      | `alpha = false`              |
+| `oceanColor`      | The color to render the ocean. A comma-separated list (R,G,B,A).                | `oceanColor = `              |
+| `normalStrength`  | A factor used when generating slope maps.                                       | `normalStrength = 1`         |
+| `slopeMin`        | The color to use for minimum slope when generating slope maps.                  | `slopeMin = 0.2,0.3,0.4,1`   |
+| `slopeMax`        | The color to use for maximum slope when generating slope maps.                  | `slopeMax = 0.9,0.6,0.5,1`   |
+| `AltitudeColor`   | List of colors used when generating maps.                                       | see above                    |
 
 #### `texture`
 
