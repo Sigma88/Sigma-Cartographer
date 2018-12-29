@@ -98,7 +98,7 @@ The image is generated into `_body_/_exportFolder_/Render/_name_/Image.png`.
 | `LAToffset`       | The latitude of the viewpoint over the body.                                    | `LAToffset = 0`              |
 | `LONoffset`       | The longitude of the viewpoint over the body.                                   | `LONoffset = 0`              |
 | `backgroundColor` | The color used for the background of the image.                                 | `backgroundColor = 0,0,0,0 ` |
-| `unlit`           | If `true`, | `unlit = false` |
+| `unlit`           | If `true`, render the image without realistic lighting.                         | `unlit = false`              |
 | `_Color`          | (_Color of the scaledspace material)                                            | `_Color = 1,1,1,1`           |
 | `_SpecColor`      | (_SpecColor of the scaledspace material)                                        | `_SpecColor = `              |
 | `_Shininess`      | (_Shininess of the scaledspace material)                                        | `_Shininess = `              |
