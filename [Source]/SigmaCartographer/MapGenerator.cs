@@ -49,16 +49,16 @@ namespace SigmaCartographerPlugin
         //------------------
         //--adding in a check to see whether maps exist. 2019-0830 STH
         static bool overwriteHeightMap = true;
-        static bool overwriteNormalMap = false;
-        static bool overwriteSlopeMap = false;
+        static bool overwriteNormalMap = true;
+        static bool overwriteSlopeMap = true;
         static bool overwriteColorMap = true;
-        static bool overwriteOceanMap = false;
-        internal static bool overwriteBiomeMap = false;
+        static bool overwriteOceanMap = true;
+        internal static bool overwriteBiomeMap = true;
 
-        static bool overwriteSatelliteHeight = false;
-        static bool overwriteSatelliteSlope = false;
-        static bool overwriteSatelliteMap = false;
-        static bool overwriteSatelliteBiome = false;
+        static bool overwriteSatelliteHeight = true;
+        static bool overwriteSatelliteSlope = true;
+        static bool overwriteSatelliteMap = true;
+        static bool overwriteSatelliteBiome = true;
         //------------------
 
         internal static CelestialBody body;
