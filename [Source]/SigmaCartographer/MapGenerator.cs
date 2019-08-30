@@ -14,8 +14,9 @@ namespace SigmaCartographerPlugin
 
         internal static bool exportAny
         {
-            get { return exportHeightMap || exportNormalMap || exportSlopeMap || exportColorMap || exportOceanMap || satelliteAny; }
-            set { exportHeightMap = exportNormalMap = exportSlopeMap = exportColorMap = exportOceanMap = satelliteAny = value; }
+            //--adding in a check to see whether maps exist. 2019-0830 STH
+            get { return exportHeightMap || exportNormalMap || exportSlopeMap || exportColorMap || exportOceanMap || satelliteAny || overwriteAny; }
+            set { exportHeightMap = exportNormalMap = exportSlopeMap = exportColorMap = exportOceanMap = satelliteAny = overwriteAny = value; }
         }
 
         static bool satelliteAny
@@ -23,6 +24,15 @@ namespace SigmaCartographerPlugin
             get { return exportSatelliteHeight || exportSatelliteSlope || exportSatelliteMap || exportSatelliteBiome; }
             set { exportSatelliteHeight = exportSatelliteSlope = exportSatelliteMap = exportSatelliteBiome = value; }
         }
+
+        //------------------
+        //--adding in a check to see whether maps exist. 2019-0830 STH
+        static bool overwriteAny
+        {
+            get { return overwriteHeightMap || overwriteNormalMap || overwriteSlopeMap || overwriteColorMap || overwriteOceanMap || overwriteSatelliteHeight || overwriteSatelliteSlope || overwriteSatelliteMap || overwriteSatelliteBiome; }
+            set { overwriteHeightMap = overwriteNormalMap = overwriteSlopeMap = overwriteColorMap = overwriteOceanMap = overwriteSatelliteHeight = overwriteSatelliteSlope = overwriteSatelliteMap = overwriteSatelliteBiome = value; }
+        }
+        //------------------
 
         static bool exportHeightMap = false;
         static bool exportNormalMap = false;
@@ -35,6 +45,21 @@ namespace SigmaCartographerPlugin
         static bool exportSatelliteSlope = false;
         static bool exportSatelliteMap = false;
         static bool exportSatelliteBiome = false;
+
+        //------------------
+        //--adding in a check to see whether maps exist. 2019-0830 STH
+        static bool overwriteHeightMap = true;
+        static bool overwriteNormalMap = false;
+        static bool overwriteSlopeMap = false;
+        static bool overwriteColorMap = true;
+        static bool overwriteOceanMap = false;
+        internal static bool overwriteBiomeMap = false;
+
+        static bool overwriteSatelliteHeight = false;
+        static bool overwriteSatelliteSlope = false;
+        static bool overwriteSatelliteMap = false;
+        static bool overwriteSatelliteBiome = false;
+        //------------------
 
         internal static CelestialBody body;
         static int width = 2048;
@@ -72,25 +97,20 @@ namespace SigmaCartographerPlugin
         internal static void LoadSettings(ConfigNode node)
         {
             bool.TryParse(node.GetValue("heightMap"), out exportHeightMap);
-            bool.TryParse(node.GetValue("satelliteHeight"), out exportSatelliteHeight);
-
             bool.TryParse(node.GetValue("normalMap"), out exportNormalMap);
-
             bool.TryParse(node.GetValue("slopeMap"), out exportSlopeMap);
-            bool.TryParse(node.GetValue("satelliteSlope"), out exportSatelliteSlope);
-
             if (!bool.TryParse(node.GetValue("colorMap"), out exportColorMap))
             {
                 exportColorMap = true;
             }
-            bool.TryParse(node.GetValue("satelliteMap"), out exportSatelliteMap);
-
             bool.TryParse(node.GetValue("oceanMap"), out exportOceanMap);
-
             bool.TryParse(node.GetValue("biomeMap"), out exportBiomeMap);
+
+            bool.TryParse(node.GetValue("satelliteHeight"), out exportSatelliteHeight);
+            bool.TryParse(node.GetValue("satelliteSlope"), out exportSatelliteSlope);
+            bool.TryParse(node.GetValue("satelliteMap"), out exportSatelliteMap);
             bool.TryParse(node.GetValue("satelliteBiome"), out exportSatelliteBiome);
-
-
+            
             if (!exportAny && !exportBiomeMap) return;
 
             string bodyName = node.GetValue("body");
