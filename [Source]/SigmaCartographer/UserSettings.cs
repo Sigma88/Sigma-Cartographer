@@ -38,7 +38,7 @@ namespace SigmaCartographerPlugin
             if (!File.Exists(folder + file + ".cfg"))
             {
                 UnityEngine.Debug.Log(Debug.Tag + " WARNING: Missing file => " + folder + file + ".cfg");
-
+                UnityEngine.Debug.Log(Debug.Tag + "          Writing file => " + folder + file + ".cfg");
                 File.WriteAllLines(folder + file + ".cfg", new[] { nodeName + " {}" });
                 return;
             }
