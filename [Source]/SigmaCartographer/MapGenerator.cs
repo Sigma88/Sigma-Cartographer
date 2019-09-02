@@ -36,6 +36,21 @@ namespace SigmaCartographerPlugin
         static bool exportSatelliteMap = false;
         static bool exportSatelliteBiome = false;
 
+        //------------------
+        //--adding in a check to see whether maps exist. 2019-0830 STH
+        static bool overwriteHeightMap = true;
+        static bool overwriteNormalMap = true;
+        static bool overwriteSlopeMap = true;
+        static bool overwriteColorMap = true;
+        static bool overwriteOceanMap = true;
+        internal static bool overwriteBiomeMap = true;
+
+        static bool overwriteSatelliteHeight = true;
+        static bool overwriteSatelliteSlope = true;
+        static bool overwriteSatelliteMap = true;
+        static bool overwriteSatelliteBiome = true;
+        //------------------
+
         internal static CelestialBody body;
         static int width = 2048;
         static int tile = 1024;
@@ -90,6 +105,20 @@ namespace SigmaCartographerPlugin
             bool.TryParse(node.GetValue("biomeMap"), out exportBiomeMap);
             bool.TryParse(node.GetValue("satelliteBiome"), out exportSatelliteBiome);
 
+            //------------------
+            //--adding in a check to see whether maps exist. 2019-0830 STH
+            bool.TryParse(node.GetValue("overwriteHeightMap"), out overwriteHeightMap);
+            bool.TryParse(node.GetValue("overwriteNormalMap"), out overwriteNormalMap);
+            bool.TryParse(node.GetValue("overwriteSlopeMap"), out overwriteSlopeMap);
+            bool.TryParse(node.GetValue("overwriteColorMap"), out overwriteColorMap);
+            bool.TryParse(node.GetValue("overwriteOceanMap"), out overwriteOceanMap);
+            bool.TryParse(node.GetValue("overwriteBiomeMap"), out overwriteBiomeMap);
+
+            bool.TryParse(node.GetValue("overwriteSatelliteHeight"), out overwriteSatelliteHeight);
+            bool.TryParse(node.GetValue("overwriteSatelliteSlope"), out overwriteSatelliteSlope);
+            bool.TryParse(node.GetValue("overwriteSatelliteMap"), out overwriteSatelliteMap);
+            bool.TryParse(node.GetValue("overwriteSatelliteBiome"), out overwriteSatelliteBiome);
+            //------------------
 
             if (!exportAny && !exportBiomeMap) return;
 
@@ -280,6 +309,89 @@ namespace SigmaCartographerPlugin
 
             // reset current
             current = 0;
+            //generate folder & file names
+            int position = Flip(current);
+            //string folder = leaflet ? (position % (width / tile) + "/") : "";
+            //string fileName = leaflet ? (position / (width / tile)) + ".png" : "Tile" + position.ToString("D4") + ".png";
+            // Expanded statements for greater understandability. STH 2019-0831
+            string folder;
+            string fileName;
+            if (leaflet){
+                folder = (position % (width / tile) + "/");
+                fileName = (position / (width / tile)) + ".png";
+            }
+            else
+            {
+                folder = "";
+                fileName = "Tile" + position.ToString("D4") + ".png";
+            }
+
+            //--------------------------
+            //put checks for images here
+            //STH 2019-0831
+            string checkFile;
+            checkFile = exportFolder + folder + "HeightMap/" + fileName;
+            if (File.Exists(checkFile) && !overwriteHeightMap)
+            {
+                exportHeightMap = false;
+                //UnityEngine.Debug.Log(Debug.Tag + " Overwrite of HeightMap skipped");
+            }
+            checkFile = exportFolder + folder + "NormalMap/" + fileName;
+            if (File.Exists(checkFile) && !overwriteNormalMap)
+            {
+                exportNormalMap = false;
+                //UnityEngine.Debug.Log(Debug.Tag + " Overwrite of NormalMap skipped");
+            }
+            checkFile = exportFolder + folder + "SlopeMap/" + fileName;
+            if (File.Exists(checkFile) && !overwriteSlopeMap)
+            {
+                exportSlopeMap = false;
+                //UnityEngine.Debug.Log(Debug.Tag + " Overwrite of SlopeMap skipped");
+            }
+            checkFile = exportFolder + folder + "ColorMap/" + fileName;
+            if (File.Exists(checkFile) && !overwriteColorMap)
+            {
+                exportColorMap = false;
+                //UnityEngine.Debug.Log(Debug.Tag + " Overwrite of ColorMap skipped");
+            }
+            checkFile = exportFolder + folder + "OceanMap/" + fileName;
+            if (File.Exists(checkFile) && !overwriteOceanMap)
+            {
+                exportOceanMap = false;
+                //UnityEngine.Debug.Log(Debug.Tag + " Overwrite of OceanMap skipped");
+            }
+            checkFile = exportFolder + folder + "BiomeMap/" + fileName;
+            if (File.Exists(checkFile) && !overwriteBiomeMap)
+            {
+                exportBiomeMap = false;
+                //UnityEngine.Debug.Log(Debug.Tag + " Overwrite of BiomeMap skipped");
+            }
+            //sat maps
+            checkFile = exportFolder + folder + "SatelliteHeight/" + fileName;
+            if (File.Exists(checkFile) && !overwriteSatelliteHeight)
+            {
+                exportSatelliteHeight = false;
+                //UnityEngine.Debug.Log(Debug.Tag + " Overwrite of SatelliteHeight skipped");
+            }
+            checkFile = exportFolder + folder + "SatelliteSlope/" + fileName;
+            if (File.Exists(checkFile) && !overwriteSatelliteSlope)
+            {
+                exportSatelliteSlope = false;
+                //UnityEngine.Debug.Log(Debug.Tag + " Overwrite of SatelliteSlope skipped");
+            }
+            checkFile = exportFolder + folder + "SatelliteMap/" + fileName;
+            if (File.Exists(checkFile) && !overwriteSatelliteMap)
+            {
+                exportSatelliteMap = false;
+                //UnityEngine.Debug.Log(Debug.Tag + " Overwrite of SatelliteMap skipped");
+            }
+            checkFile = exportFolder + folder + "SatelliteBiome/" + fileName;
+            if (File.Exists(checkFile) && !overwriteSatelliteBiome)
+            {
+                exportSatelliteBiome = false;
+                //UnityEngine.Debug.Log(Debug.Tag + " Overwrite of SatelliteBiome skipped");
+            }
+            //--------------------------
 
             // Get PQS
             PQS pqs = null;
@@ -488,9 +600,13 @@ namespace SigmaCartographerPlugin
                         }
 
                         // Serialize them to disk
-                        int position = Flip(current);
-                        string folder = leaflet ? (position % (width / tile) + "/") : "";
-                        string fileName = leaflet ? (position / (width / tile)) + ".png" : "Tile" + position.ToString("D4") + ".png";
+                        //--------
+                        //moved to before processing
+                        //STH 2019-0831
+                        //int position = Flip(current);
+                        //string folder = leaflet ? (position % (width / tile) + "/") : "";
+                        //string fileName = leaflet ? (position / (width / tile)) + ".png" : "Tile" + position.ToString("D4") + ".png";
+                        //--------
 
                         // Export
                         try
